@@ -1,32 +1,24 @@
-const { expect } = require("@playwright/test");
-const { authenticator } = require("otplib");
+const { expect } = require('@playwright/test');
+const { authenticator } = require('otplib');
 
-class LoginPage {
-  constructor(page) {
-    this.page = page;
-  }
+async function loginWithGoogle(page, email, password, secret) {
+  await page.goto(`${process.env.BASE_URL}/sign_in`);
+  await page.getByRole('button', { name: 'Sign in with Google' }).click();
 
-  async loginWithGoogle(email, password, secret) {
-    await this.page.goto(`${process.env.BASE_URL}/sign_in`);
-    await this.page
-      .getByRole("button", { name: "Sign in with Google" })
-      .click();
+  await page.locator('[id="identifierId"]').fill(email);
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.waitForTimeout(2000);
 
-    await this.page.locator('[id="identifierId"]').fill(email);
-    await this.page.getByRole("button", { name: "Next" }).click();
-    await this.page.waitForTimeout(2000);
+  await page.getByLabel('Enter your password').fill(password);
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.waitForTimeout(2000);
 
-    await this.page.getByLabel("Enter your password").fill(password);
-    await this.page.getByRole("button", { name: "Next" }).click();
-    await this.page.waitForTimeout(2000);
+  const otp = authenticator.generate(secret);
+  await page.getByLabel('Enter code').fill(otp);
+  await page.getByRole('button', { name: 'Next' }).click();
 
-    const otp = authenticator.generate(secret);
-    await this.page.getByLabel("Enter code").fill(otp);
-    await this.page.getByRole("button", { name: "Next" }).click();
-
-    await this.page.waitForTimeout(3500);
-    await expect(this.page).toHaveURL("https://beta7.dentolo-test.de/admin");
-  }
+  await page.waitForTimeout(3500);
+  await expect(page).toHaveURL('https://beta7.dentolo-test.de/admin');
 }
 
-module.exports = { LoginPage };
+module.exports = { loginWithGoogle };
